@@ -2,21 +2,18 @@
 
 var toAtom = require('lib/convert').toAtom
 var toUnitString = require('lib/convert').toUnitString
-var bitcoin = require('cs-wallet').bitcoin
 
 function validateSend(options) {
   var amount = toAtom(options.amount);
   var wallet = options.wallet;
-  var dynamicFees = options.dynamicFees;
   var to = options.to;
+  var fee = toAtom(options.fee);
   var tx = null;
   var fee;
   var message;
 
   try {
-    if (['bitcoin', 'bitcoincash', 'litecoin', 'dogecoin'].indexOf(wallet.networkName) !== -1) {
-      var defaultRate = bitcoin.networks[wallet.networkName].feePerKb;
-      fee = wallet.estimateFees(to, amount, [dynamicFees.minimum * 1000 || defaultRate])[0];
+    if (['bitcoin', 'bitcoincash', 'litecoin', 'dogecoin', 'dash'].indexOf(wallet.networkName) !== -1) {
       tx = wallet.createTx(to, amount, fee);
     } else if (wallet.networkName === 'ethereum') {
       tx = wallet.createTx(to, amount);
@@ -27,6 +24,7 @@ function validateSend(options) {
     } else if (wallet.networkName === 'eos') {
       tx = wallet.createTx(to, amount, options.memo)
     }
+    options.tx = tx;
   } catch(e) {
     var error;
     if (/Invalid address/.test(e.message)) {
@@ -54,6 +52,8 @@ function validateSend(options) {
       throw error
     } else if (/Invalid gasLimit/.test(e.message)) {
       throw new Error('Please enter Gas Limit greater than zero')
+    } else if (/Transaction too large/.test(e.message)) {
+      throw new Error('Transaction too large')
     } else if (/Insufficient funds/.test(e.message)) {
       if (/Additional funds confirmation pending/.test(e.details)) {
         throw new Error('Some funds are temporarily unavailable. To send this transaction, you will need to wait for your pending transactions to be confirmed first.')
@@ -89,7 +89,7 @@ function validateSend(options) {
       }
     } else if (/Insufficient ethereum funds for token transaction/.test(e.message)) {
       error = new Error('You do not have enough Ethereum funds to pay transaction fee (:ethereumRequired ETH).');
-      error.interpolations = { ethereumRequired: toUnitString(e.ethereumRequired) };
+      error.interpolations = { ethereumRequired: toUnitString(e.ethereumRequired, 18) };
       throw error;
     }
 

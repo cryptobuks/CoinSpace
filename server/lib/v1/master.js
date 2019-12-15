@@ -4,6 +4,7 @@ var geo = require('./geo');
 var fee = require('./fee');
 var ticker = require('./ticker');
 var ethereumTokens = require('./ethereumTokens');
+var moonpay = require('./moonpay');
 
 function cleanGeo(interval) {
   setInterval(function intervalFunction(){
@@ -46,9 +47,38 @@ function cacheEthereumTokens(interval) {
   }(), interval);
 }
 
+function cacheMoonpayCurrencies(interval) {
+  setInterval(function intervalFunction() {
+    moonpay.getCurrenciesFromAPI().then(function(data) {
+      if (global.gc) global.gc();
+      return Promise.all([
+        moonpay.save('coins', data.coins),
+        moonpay.save('coins_usa', data.coins_usa),
+        moonpay.save('fiat', data.fiat)
+      ]);
+    }).catch(console.error);
+    return intervalFunction;
+  }(), interval);
+}
+
+function cacheMoonpayCountries(interval) {
+  setInterval(function intervalFunction() {
+    moonpay.getCountriesFromAPI().then(function(data) {
+      if (global.gc) global.gc();
+      return Promise.all([
+        moonpay.save('countries_allowed', data.allowed),
+        moonpay.save('countries_document', data.document)
+      ]);
+    }).catch(console.error);
+    return intervalFunction;
+  }(), interval);
+}
+
 module.exports = {
   cleanGeo: cleanGeo,
   cacheFees: cacheFees,
   cacheTicker: cacheTicker,
-  cacheEthereumTokens: cacheEthereumTokens
+  cacheEthereumTokens: cacheEthereumTokens,
+  cacheMoonpayCurrencies: cacheMoonpayCurrencies,
+  cacheMoonpayCountries: cacheMoonpayCountries
 }

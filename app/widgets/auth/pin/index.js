@@ -8,6 +8,7 @@ var showError = require('widgets/modals/flash').showError
 var translate = require('lib/i18n').translate
 var getLanguage = require('lib/i18n').getLanguage
 var shapeshift = require('lib/shapeshift');
+var moonpay = require('lib/moonpay');
 var pincode = ''
 
 module.exports = function(prevPage, data){
@@ -108,11 +109,12 @@ module.exports = function(prevPage, data){
     CS.reset();
     CS.resetPin();
     shapeshift.cleanAccessToken();
+    moonpay.cleanAccessToken();
     location.reload();
   })
 
   ractive.on('back', function(){
-    if(prevPage) prevPage(data)
+    if (prevPage) prevPage(data)
   })
 
   function getPin(){

@@ -18,6 +18,7 @@ console.log('Start building (webpack)...');
 
 var envFile = `.env.${program.env}`;
 process.env['ENV_FILE'] = envFile;
+process.env['ENV'] = program.env;
 process.env['BUILD_TYPE'] = 'phonegap';
 var webpackConfig = require('../webpack.prod');
 
@@ -51,10 +52,9 @@ webpack(webpackConfig, function(error, stats) {
   utils.cordova('plugin add cordova-plugin-statusbar@2.3.0');
   utils.cordova('plugin add cordova-plugin-x-socialsharing@5.2.0');
   utils.cordova('plugin add cordova-plugin-touch-id@3.2.0');
-  utils.cordova('plugin add cordova-facebook-audnet-sdk@4.23.0');
-  utils.cordova('plugin add cordova-plugin-facebookads@4.23.2');
-  utils.cordova('plugin add cc.fovea.cordova.purchase@7.2.0');
   utils.cordova('plugin add cordova-plugin-customurlscheme@4.3.0 --variable URL_SCHEME=coinspace');
+  utils.cordova('plugin add https://github.com/CoinSpace/cordova-plugin-zendesk#45badb1e6f909bb80592779f7cb6baf6875df3ab');
+  utils.cordova('plugin add cordova-plugin-cookiemaster@1.0.5');
 
   if (program.release) {
     utils.cordova('build ios --emulator --buildConfig=../build.json --release');

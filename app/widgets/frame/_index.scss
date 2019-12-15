@@ -61,14 +61,6 @@
   }
 }
 
-.fb_web_ads {
-  #main {
-    .content {
-      margin-bottom: 50px;
-    }
-  }
-}
-
 .main__iphone_x {
   @include iphone-x-top;
   background-color: darken($brand-green, 30%);
@@ -81,6 +73,11 @@
 .dogecoin {
   .main__iphone_x {
     background-color: darken($dogecoin, 30%);
+  }
+}
+.dash {
+  .main__iphone_x {
+    background-color: darken($dash, 30%);
   }
 }
 .ethereum {

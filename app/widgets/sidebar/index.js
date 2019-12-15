@@ -5,7 +5,9 @@ var emitter = require('lib/emitter');
 var initAccount = require('widgets/account-details');
 var importPrivateKey = require('widgets/modals/import-private-key');
 var exportPrivateKeys = require('widgets/modals/export-private-keys');
-var getWallet = require('lib/wallet').getWallet;
+var CS = require('lib/wallet');
+var shapeshift = require('lib/shapeshift');
+var moonpay = require('lib/moonpay');
 var showEosSetupAccount = require('widgets/modals/eos-setup-account');
 
 module.exports = function(el) {
@@ -15,7 +17,8 @@ module.exports = function(el) {
     data: {
       isEnabledImport: true,
       isEnabledExport: true,
-      isEOS: false
+      isEOS: false,
+      isPhonegap: process.env.BUILD_TYPE === 'phonegap',
     }
   });
 
@@ -23,12 +26,21 @@ module.exports = function(el) {
 
   ractive.on('logout', function(context) {
     context.original.preventDefault();
-    window.location.reload();
+    CS.reset();
+    CS.resetPin();
+    shapeshift.cleanAccessToken();
+    moonpay.cleanAccessToken();
+    location.reload();
   });
 
   ractive.on('about', function() {
     emitter.emit('toggle-menu', false);
     emitter.emit('toggle-terms', true);
+  });
+
+  ractive.on('show-zendesk', function(context) {
+    context.original.preventDefault();
+    window.Zendesk.showHelpCenter();
   });
 
   ractive.on('import-private-key', function() {
@@ -42,7 +54,7 @@ module.exports = function(el) {
   ractive.on('eos-setup-account', showEosSetupAccount);
 
   emitter.on('wallet-ready', function() {
-    var wallet = getWallet();
+    var wallet = CS.getWallet();
     ractive.set('isEOS', wallet.networkName === 'eos');
     if (wallet.networkName === 'ethereum' && wallet.token) {
       ractive.set('isEnabledImport', false);

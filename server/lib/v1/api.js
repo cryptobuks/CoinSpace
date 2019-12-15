@@ -8,10 +8,13 @@ var geo = require('./geo');
 var validatePin = require('cs-pin-validator');
 var openalias = require('cs-openalias');
 var fee = require('./fee');
+var csFee = require('./csFee');
 var ticker = require('./ticker');
 var ethereumTokens = require('./ethereumTokens');
 var iap = require('./iap');
 var shapeshift = require('./shapeshift');
+var changelly = require('./changelly');
+var moonpay = require('./moonpay');
 
 var router = express.Router();
 
@@ -108,6 +111,15 @@ router.get('/fees', function(req, res) {
   });
 });
 
+router.get('/csFee', function(req, res) {
+  var network = req.query.network || 'bitcoin'
+  csFee.get(network).then(function(data) {
+    res.status(200).send(data);
+  }).catch(function(err) {
+    res.status(400).send(err);
+  });
+});
+
 router.get('/ticker', function(req, res) {
   var crypto = req.query.crypto
   if (!crypto) return res.status(400).json({error: 'Bad request'});
@@ -180,6 +192,90 @@ router.delete('/shapeShiftToken', restrict, function(req, res) {
   var token = req.body.token;
   shapeshift.revokeToken(token).catch(function() {});
   res.status(200).send();
+});
+
+router.get('/changelly/getCoins', function(req, res) {
+  changelly.getCoins().then(function(coins) {
+    res.status(200).send(coins);
+  }).catch(function(err) {
+    res.status(400).send(err);
+  });
+});
+
+router.get('/changelly/estimate', function(req, res) {
+  var from = req.query.from || '';
+  var to = req.query.to || '';
+  var amount = req.query.amount || 0;
+  if (!from || !to) return res.status(400).json({error: 'Bad request'});
+  changelly.estimate(from, to, amount).then(function(data) {
+    res.status(200).send(data);
+  }).catch(function(err) {
+    res.status(400).send(err);
+  });
+});
+
+router.get('/changelly/validate/:address/:symbol', function(req, res) {
+  changelly.validateAddress(req.params.address, req.params.symbol).then(function(data) {
+    res.status(200).send(data);
+  }).catch(function(err) {
+    res.status(400).send(err);
+  })
+});
+
+router.post('/changelly/createTransaction', restrict, function(req, res) {
+  var from = req.body.from;
+  var to = req.body.to;
+  var amount = req.body.amount;
+  var address = req.body.address;
+  var refundAddress = req.body.refundAddress;
+  if (!from || !to || !amount || !address) return res.status(400).json({error: 'Bad request'});
+  changelly.createTransaction(from, to, amount, address, refundAddress).then(function(data) {
+    res.status(200).send(data);
+  }).catch(function(err) {
+    res.status(400).send(err);
+  });
+});
+
+router.get('/changelly/transaction/:id', function(req, res) {
+  changelly.getTransaction(req.params.id).then(function(data) {
+    res.status(200).send(data);
+  }).catch(function(err) {
+    res.status(400).send(err);
+  });
+});
+
+router.get('/moonpay/coins', function(req, res) {
+  var id = 'coins';
+  if (req.query.country === 'USA') id += '_usa';
+  moonpay.getFromCache(id).then(function(data) {
+    res.status(200).send(data);
+  }).catch(function(err) {
+    res.status(400).send(err);
+  });
+});
+
+router.get('/moonpay/fiat', function(req, res) {
+  moonpay.getFromCache('fiat').then(function(data) {
+    res.status(200).send(data);
+  }).catch(function(err) {
+    res.status(400).send(err);
+  });
+});
+
+router.get('/moonpay/countries', function(req, res) {
+  if (!['document', 'allowed'].includes(req.query.type)) return res.status(400).json({error: 'Bad request'});
+  moonpay.getFromCache('countries_' + req.query.type).then(function(data) {
+    res.status(200).send(data);
+  }).catch(function(err) {
+    res.status(400).send(err);
+  });
+});
+
+router.get('/moonpay/redirectURL', function(req, res) {
+  var buildType = req.query.buildType;
+  var transactionId = req.query.transactionId || '';
+  if (buildType !== 'phonegap' && buildType !== 'web') return res.status(400).send('Bad request');
+  res.render('moonpay', {transactionId: transactionId, buildType: buildType});
 });
 
 router.use(function(err, req, res, next) {

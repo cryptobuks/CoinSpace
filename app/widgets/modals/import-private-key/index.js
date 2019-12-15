@@ -7,7 +7,7 @@ var emitter = require('lib/emitter');
 var showConfirmation = require('widgets/modals/confirm-send');
 var showInfo = require('widgets/modals/flash').showInfo;
 var getWallet = require('lib/wallet').getWallet;
-var getDynamicFees = require('lib/wallet').getDynamicFees;
+var setToAlias = require('lib/wallet').setToAlias;
 var toUnitString = require('lib/convert').toUnitString;
 var getTokenNetwork = require('lib/token').getTokenNetwork;
 var _ = require('lodash');
@@ -48,15 +48,15 @@ function open() {
         return showInfo({message: 'This private key has no coins for transfer.'});
       }
       importTxOptions.to = to;
-      return getDynamicFees().then(function(dynamicFees) {
-        showConfirmation({
-          to: importTxOptions.to,
-          amount: toUnitString(importTxOptions.amount),
-          denomination: wallet.denomination,
-          dynamicFees: dynamicFees,
-          fadeInDuration: 0,
-          importTxOptions: importTxOptions
-        });
+      setToAlias(importTxOptions);
+      
+      showConfirmation({
+        to: importTxOptions.to,
+        alias: importTxOptions.alias,
+        amount: toUnitString(importTxOptions.amount),
+        denomination: wallet.denomination,
+        fadeInDuration: 0,
+        importTxOptions: importTxOptions
       });
 
     }).catch(handleError);
@@ -70,7 +70,7 @@ function open() {
     ractive.set('isLoading', false);
     if (/^Private key equal wallet private key/.test(err.message)) {
       return showError({message: 'Please enter a private key other than your wallet private key'});
-    } else if ('cs-node-error') {
+    } else if (err.message === 'cs-node-error') {
       return showError({
         message: 'Network node error. Please try again later.',
         interpolations: { network: _.upperFirst(getTokenNetwork()) }

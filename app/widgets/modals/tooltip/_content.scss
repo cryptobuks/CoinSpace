@@ -29,6 +29,9 @@
   @include breakpoint(portrait) {
     font-size: 24px;
   }
+  a {
+    text-decoration: underline;
+  }
 }
 
 .tooltip__link {
@@ -57,6 +60,13 @@
   .tooltip__link {
     a {
       color: $dogecoin;
+    }
+  }
+}
+.dash {
+  .tooltip__link {
+    a {
+      color: $dash;
     }
   }
 }

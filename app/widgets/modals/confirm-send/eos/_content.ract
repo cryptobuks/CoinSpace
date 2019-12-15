@@ -12,12 +12,14 @@
         <span class="_currency">{{denomination}}</span>
       </div>
 
+      <span class="_fee">{{feeSign}}{{fee}} {{denomination}} {{translate("transaction fee")}}</span>
+
       <span class="_icon">
         {{>svg_sendto}}
       </span>
       <span class="_address">{{to}}</span>
       {{#if memo}}
-      <span class="_memo">Memo: {{memo}}</span>
+      <span class="_memo">{{translate("Memo")}}: {{memo}}</span>
       {{/if}}
 
     </div>

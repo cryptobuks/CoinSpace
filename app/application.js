@@ -15,9 +15,9 @@ window.initCSApp = function() {
   var initGeoOverlay = require('widgets/geo-overlay')
   var getToken = require('lib/token').getToken;
   var denomination = require('lib/denomination');
+  var moonpay = require('lib/moonpay');
 
   var fadeIn = require('lib/transitions/fade.js').fadeIn
-  var ads = require('lib/ads');
 
   var appEl = document.getElementById('app')
   var htmlEl = document.documentElement
@@ -28,10 +28,6 @@ window.initCSApp = function() {
   FastClick.attach(document.body)
 
   initGeoOverlay(document.getElementById('geo-overlay'))
-
-  if (process.env.BUILD_TYPE === 'phonegap') {
-    ads.init();
-  }
 
   auth = walletExists() ? initAuth.pin(null, { userExists: true }) : initAuth.choose()
   var authContentEl = document.getElementById('auth_content')
@@ -50,7 +46,14 @@ window.initCSApp = function() {
   })
 
   emitter.once('wallet-ready', function() {
+    if (window.Zendesk) {
+      window.Zendesk.setAnonymousIdentity(process.env.BUILD_PLATFORM + ' user');
+    }
+    if (process.env.BUILD_PLATFORM === 'ios') {
+      window.StatusBar.styleLightContent();
+    }
     updateExchangeRates();
+    moonpay.init();
     auth.hide();
     frame.show();
   });

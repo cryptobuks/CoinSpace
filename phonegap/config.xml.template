@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.coinspace.app" android-versionCode="2152" version="2.9.2" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+<widget id="com.coinspace.app" android-versionCode="2171" version="2.16.7" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
     <name>Coin</name>
     <description>
         Coin application.
@@ -15,6 +15,7 @@
     <allow-intent href="sms:*" />
     <allow-intent href="mailto:*" />
     <allow-intent href="geo:*" />
+    <allow-navigation href="https://*/*" />
     <platform name="android">
         <allow-intent href="market:*" />
         <icon src="../images/android/icons/36.png" density="ldpi"/>
@@ -29,9 +30,6 @@
         <splash src="../images/android/screens/mdpi-port.png" density="port-mdpi"/>
         <splash src="../images/android/screens/hdpi-port.png" density="port-hdpi"/>
         <splash src="../images/android/screens/xhdpi-port.png" density="port-xhdpi"/>
-        <custom-config-file target="AndroidManifest.xml" parent="./application">
-            <meta-data android:name = "com.google.android.gms.ads.AD_MANAGER_APP" android:value="true" />
-        </custom-config-file>
         <custom-config-file target="AndroidManifest.xml" parent="/*" mode="replace">
             <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
             <uses-feature android:name="android.hardware.camera" android:required="false" />
@@ -64,11 +62,12 @@
         <splash src="../images/ios/screens/Default@3x~iphone~comany.png" />
         <splash src="../images/ios/screens/Default@2x~ipad~anyany.png" />
         <splash src="../images/ios/screens/Default@2x~ipad~comany.png" />
+        <preference name="StatusBarStyle" value="default" />
     </platform>
     <preference name="StatusBarBackgroundColor" value="#FFFFFF" />
     <preference name="SplashScreenDelay" value="2000"/>
     <preference name="android-minSdkVersion" value="19" />
-    <preference name="android-targetSdkVersion" value="26" />
+    <preference name="android-targetSdkVersion" value="28" />
     <preference name="KeyboardDisplayRequiresUserAction" value="false" />
     <preference name="DisallowOverscroll" value="true"/>
 </widget>

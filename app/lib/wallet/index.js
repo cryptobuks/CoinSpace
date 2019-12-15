@@ -15,7 +15,6 @@ var validateSend = require('./validator')
 var rng = require('secure-random').randomBuffer
 var bitcoin = CsWallet.bitcoin
 var request = require('lib/request')
-var cache = require('memory-cache')
 var EthereumWallet = require('cs-ethereum-wallet');
 var RippleWallet = require('cs-ripple-wallet');
 var StellarWallet = require('cs-stellar-wallet');
@@ -27,6 +26,7 @@ var db = require('lib/db');
 var _ = require('lodash');
 var HDKey = require('hdkey');
 var Buffer = require('safe-buffer').Buffer;
+var bchaddr = require('bchaddrjs');
 
 var wallet = null
 var seed = null
@@ -42,15 +42,13 @@ var Wallet = {
   ripple: RippleWallet,
   stellar: StellarWallet,
   eos: EOSWallet,
-  dogecoin: CsWallet
+  dogecoin: CsWallet,
+  dash: CsWallet
 }
 
 var urlRoot = window.urlRoot
 
 function createWallet(passphrase, network, callback) {
-  var message = passphrase ? 'Decoding seed phrase' : 'Generating'
-  emitter.emit('wallet-opening', message)
-
   var data = {passphrase: passphrase}
   if(!passphrase){
    data.entropy = rng(128 / 8).toString('hex')
@@ -68,7 +66,7 @@ function createWallet(passphrase, network, callback) {
   }
 
   worker.onerror = function(e) {
-    return callback({message: e.message.replace("Uncaught Error: ", '')})
+    return callback({message: e.message.split(': ')[1]})
   }
 
   worker.postMessage(data)
@@ -180,11 +178,23 @@ function initWallet(networkName, done, txDone) {
     options.minConf = 12;
     options.token = token;
     convert.setDecimals(token ? token.decimals : 18);
-  } else if (['bitcoin', 'bitcoincash', 'litecoin', 'dogecoin'].indexOf(networkName) !== -1) {
+  } else if (['bitcoin', 'bitcoincash', 'litecoin', 'dogecoin', 'dash'].indexOf(networkName) !== -1) {
     var accounts = getDerivedAccounts(networkName);
     options.externalAccount = accounts.externalAccount;
     options.internalAccount = accounts.internalAccount;
     options.minConf = 4;
+    options.getDynamicFees = function() {
+      return request({
+        url: urlRoot + 'fees',
+        params: { network: networkName },
+      }).catch(console.error);
+    }
+    options.getCsFee = function() {
+      return request({
+        url: urlRoot + 'csFee',
+        params: { network: networkName },
+      }).catch(console.error);
+    }
     convert.setDecimals(8);
   } else if (networkName === 'ripple') {
     options.seed = seed;
@@ -208,6 +218,7 @@ function initWallet(networkName, done, txDone) {
 }
 
 function isValidWalletToken(token) {
+  if (token && token.isDefault) return true;
   var walletTokens = db.get('walletTokens') || [];
   var isFound = _.find(walletTokens, function(item) {
     return _.isEqual(token, item);
@@ -240,8 +251,8 @@ function parseHistoryTx(tx) {
     return tx;
   } else if (networkName === 'eos') {
     return tx;
-  } else if (['bitcoin', 'bitcoincash', 'litecoin', 'dogecoin'].indexOf(networkName) !== -1) {
-    return utils.parseBtcLtcTx(tx);
+  } else if (['bitcoin', 'bitcoincash', 'litecoin', 'dogecoin', 'dash'].indexOf(networkName) !== -1) {
+    return utils.parseBtcLtcTx(tx, networkName);
   }
 }
 
@@ -265,33 +276,23 @@ function reset() {
   walletDb.deleteCredentials();
 }
 
-function getDynamicFees() {
-  if (['bitcoin', 'bitcoincash', 'litecoin', 'dogecoin'].indexOf(wallet.networkName) === -1) return Promise.resolve();
-  var fees = cache.get('fees')
-
-  if (fees) {
-    return Promise.resolve(fees)
-  }
-
-  return request({
-    url: urlRoot + 'fees',
-    params: {
-      network: wallet.networkName
-    },
-  }).then(function(data) {
-    cache.put('fees', data, 10 * 60 * 1000)
-    return data;
-  }).catch(function() {
-    return {};
-  });
-}
-
 function getDestinationInfo(to) {
   if (wallet.networkName === 'ripple' || wallet.networkName === 'stellar') {
-    return wallet.getDestinationInfo(to)
+    return wallet.getDestinationInfo(to);
   } else {
-    return Promise.resolve()
+    return Promise.resolve();
   }
+}
+
+function setToAlias(data) {
+  if (wallet.networkName !== 'bitcoincash') return;
+  try {
+    var legacy = bchaddr.toLegacyAddress(data.to);
+    if (legacy !== data.to) {
+      data.alias = data.to;
+      data.to = legacy;
+    }
+  } catch (e) {}
 }
 
 module.exports = {
@@ -311,6 +312,6 @@ module.exports = {
   getPin: getPin,
   resetPin: resetPin,
   setAvailableTouchId: setAvailableTouchId,
-  getDynamicFees: getDynamicFees,
-  getDestinationInfo: getDestinationInfo
+  getDestinationInfo: getDestinationInfo,
+  setToAlias: setToAlias
 }

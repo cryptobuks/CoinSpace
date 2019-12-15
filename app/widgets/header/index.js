@@ -45,10 +45,6 @@ module.exports = function(el) {
     ractive.set('denomination', getWallet().denomination)
   })
 
-  emitter.on('update-balance', function() {
-    ractive.set('bitcoinBalance', getWallet().getBalance())
-  })
-
   ractive.on('toggle', function(){
     window.scrollTo(0, 0);
     emitter.emit('toggle-menu', !ractive.get('menuOpen'))
@@ -75,9 +71,8 @@ module.exports = function(el) {
       emitter.emit('sync')
       setTimeout(function() {
         var onSyncDone = onSyncDoneWrapper({
-          success: function() {
-            emitter.emit('update-balance');
-            emitter.emit('wallet-unblock');
+          complete: function() {
+            emitter.emit('wallet-ready');
           }
         });
         var onTxSyncDone = onTxSyncDoneWrapper();
@@ -134,12 +129,12 @@ module.exports = function(el) {
     if(amount == undefined || exchangeRate == undefined) return "N/A";
 
     var btc = toUnit(amount)
-    return new Big(exchangeRate).times(btc).toFixed(2)
+    return Big(exchangeRate).times(btc).toFixed(2)
   }
 
   function bitcoinPrice(exchangeRate) {
     if (typeof exchangeRate !== 'number') return '';
-    return new Big(exchangeRate).times(1).toFixed(2)
+    return Big(exchangeRate).times(1).toFixed(2)
   }
 
   function setPreferredCurrency(currency, old) {

@@ -1,7 +1,7 @@
 'use strict';
 
 var Ractive = require('lib/ractive');
-var showRemoveConfirmation = require('widgets/modals/confirm-remove-token');
+var showRemoveConfirmation = require('widgets/modals/confirm-remove');
 var addEthereumToken = require('widgets/modals/add-ethereum-token');
 var setToken = require('lib/token').setToken;
 var getToken = require('lib/token').getToken;
@@ -14,6 +14,15 @@ var onTxSyncDoneWrapper = require('lib/wallet/utils').onTxSyncDoneWrapper;
 
 var walletTokens = [];
 var isEnabled = false;
+var tetherToken = {
+  address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+  decimals: 6,
+  name: 'Tether USD',
+  network: 'ethereum',
+  symbol: 'USDT',
+  icon: 'svg_token_tether',
+  isDefault: true
+};
 
 module.exports = function(el) {
 
@@ -46,6 +55,7 @@ module.exports = function(el) {
     var ethereumTokens = walletTokens.filter(function(token) {
       return token.network === 'ethereum';
     });
+    ethereumTokens.unshift(tetherToken);
     ractive.set('ethereumTokens', ethereumTokens);
     ractive.set('currentToken', getToken());
   });
@@ -70,7 +80,7 @@ module.exports = function(el) {
     emitter.emit('sync');
 
     var onSyncDone = onSyncDoneWrapper({
-      success: function() {
+      complete: function() {
         window.scrollTo(0, 0);
         emitter.emit('wallet-ready');
       }
@@ -82,9 +92,22 @@ module.exports = function(el) {
   }
 
   function removeEthereumToken(token) {
-    var index = ractive.get('ethereumTokens').indexOf(token);
-    showRemoveConfirmation(token, walletTokens, function() {
-      ractive.splice('ethereumTokens', index, 1);
+    var rindex = ractive.get('ethereumTokens').indexOf(token);
+    showRemoveConfirmation(token.name, function(modal) {
+      var index = walletTokens.indexOf(token);
+      if (index === -1) return modal.fire('cancel');
+
+      walletTokens.splice(index, 1);
+
+      db.set('walletTokens', walletTokens).then(function() {
+        modal.set('onDismiss', function() {
+          ractive.splice('ethereumTokens', rindex, 1);
+        });
+        modal.fire('cancel');
+      }).catch(function(err) {
+        console.error(err);
+        modal.fire('cancel');
+      });
     });
     return false;
   }

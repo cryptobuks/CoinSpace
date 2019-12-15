@@ -23,7 +23,11 @@
     <div class="detail__strings">
 
       <h3 class="_title">{{translate("Transaction Id:")}}</h3>
-      <a href="" onclick="window.open('https://etherscan.io/tx/{{id}}', '_system'); return false;" class="_value">{{id}}</a>
+      {{#if transaction.token}}
+      <a href="" onclick="window.open('https://blockchair.com/ethereum/transaction/{{id}}?from=coinwallet', '_system'); return false;" class="_value">{{id}}</a>
+      {{else}}
+      <a href="" onclick="window.open('https://blockchair.com/ethereum/transaction/{{id}}?from=coinwallet', '_system'); return false;" class="_value">{{id}}</a>
+      {{/if}}
 
       {{#unless token}}
         <h3 class="_title">{{translate("Transaction Fee:")}}</h3>
@@ -34,12 +38,12 @@
         {{/if}}
       {{/unless}}
 
-      <h3 class="_title">{{translate("From:")}}</h3>
+      <h3 class="_title">{{translate("From")}}:</h3>
       <code class="_value">
         <span class="_address">{{from}}</span>
       </code>
 
-      <h3 class="_title">{{translate("To:")}}</h3>
+      <h3 class="_title">{{translate("To")}}:</h3>
       <code class="_value">
         <span class="_address">{{to}}</span>
       </code>

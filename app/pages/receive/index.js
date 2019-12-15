@@ -35,10 +35,6 @@ module.exports = function(el){
     showQRcode();
   })
 
-  emitter.on('update-balance', function() {
-    ractive.set('address', getAddress())
-  })
-
   ractive.on('toggle-broadcast', function() {
     if (ractive.get('connecting')) return;
 
@@ -102,8 +98,8 @@ module.exports = function(el){
     })
   })
 
-  function getAddress(){
-    return CS.getWallet().getNextAddress()
+  function getAddress() {
+    return CS.getWallet().getNextAddress();
   }
 
   function handleMectoError(err) {

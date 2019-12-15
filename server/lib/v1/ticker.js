@@ -12,6 +12,8 @@ var fsyms = [
   'XLM',
   'EOS',
   'DOGE',
+  'DASH',
+  'USDT',
   'USD'
 ]
 
@@ -29,10 +31,7 @@ function save(tickers) {
   });
 
   var collection = db().collection('ticker');
-  return collection.bulkWrite(operations)
-    .then(function() {
-      return true;
-    });
+  return collection.bulkWrite(operations);
 }
 
 function getFromAPI() {
